@@ -30,28 +30,6 @@ func getUnit(target: String) -> String {
     }
     return unit
 }
-// input
-repeat {
-    print("변환시킬 길이 값을 입력해 주세요.")
-    input = readLine() ?? ""
-    inputArr = input.components(separatedBy: " ")
-    if inputArr.count > 1 {
-        if Unit(rawValue: inputArr[1]) != nil {
-            targetFlag = true
-        } else {
-            print("지원하지 않는 단위입니다.")
-            targetFlag = false
-        }
-    } else {
-        targetFlag = true
-    }
-    if Unit(rawValue: getUnit(target: inputArr[0])) != nil {
-        unitFlag = true
-    } else {
-        print("지원하지 않는 단위입니다.")
-        unitFlag = false
-    }
-} while(!targetFlag || !unitFlag)
 
 // calculate
 func getCentiMeterFromMeter(_ input: Double) -> Double {
@@ -125,9 +103,36 @@ func printResult(_ result: String) {
     print("\(result)")
 }
 
-if inputArr.count > 1 {
-    getResultString(inputArr[0], inputArr[1])
-} else {
-    getResultString(inputArr[0])
+flag : while true {
+    // input
+    repeat {
+        print("변환시킬 길이 값을 입력해 주세요.")
+        input = readLine() ?? ""
+        if input == "q" || input == "quit" {
+            break flag
+        }
+        inputArr = input.components(separatedBy: " ")
+        if inputArr.count > 1 {
+            if Unit(rawValue: inputArr[1]) != nil {
+                targetFlag = true
+            } else {
+                print("지원하지 않는 단위입니다.")
+                targetFlag = false
+            }
+        } else {
+            targetFlag = true
+        }
+        if Unit(rawValue: getUnit(target: inputArr[0])) != nil {
+            unitFlag = true
+        } else {
+            print("지원하지 않는 단위입니다.")
+            unitFlag = false
+        }
+    } while(!targetFlag || !unitFlag)
+    
+    if inputArr.count > 1 {
+        getResultString(inputArr[0], inputArr[1])
+    } else {
+        getResultString(inputArr[0])
+    }
 }
-
