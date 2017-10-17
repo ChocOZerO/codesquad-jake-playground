@@ -2,14 +2,28 @@
 
 import UIKit
 
-var str = "Hello, playground"
-
-var input : String = "120cm"
+var input : String = "1.8m"
 var result : String = ""
-if input.contains("cm") {
-    result = String((Double(input.prefix(input.count - 2)) ?? 0) / 100) + "m"
-} else {
-    result = String(Int((Double(input.prefix(input.count - 1)) ?? 0) * 100)) + "cm"
+
+func getCentiMeterFromMeter(_ input:String) -> Int {
+    return Int((Double(input.prefix(input.count - 1)) ?? 0) * 100)
 }
 
-print("\(result)")
+func getMeterFromCentiMeter(_ input: String) -> Double {
+    return (Double(input.prefix(input.count - 2)) ?? 0) / 100
+}
+
+func getResultString(_ input: String) {
+    if input.contains("cm") {
+        result = String(getMeterFromCentiMeter(input)) + "m"
+    } else {
+        result = String(getCentiMeterFromMeter(input)) + "cm"
+    }
+    printResult(result)
+}
+
+func printResult(_ result: String) {
+    print("\(result)")
+}
+
+getResultString(input)
