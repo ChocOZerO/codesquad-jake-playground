@@ -8,7 +8,8 @@
 
 import Foundation
 
-var input : String = "1.8m"
+print("변환시킬 길이 값을 입력해 주세요. 예) 1.8m -> 180cm")
+var input : String? = readLine()
 var result : String = ""
 
 func getCentiMeterFromMeter(_ input:String) -> Int {
@@ -22,7 +23,7 @@ func getMeterFromCentiMeter(_ input: String) -> Double {
 func getResultString(_ input: String) {
     if input.contains("cm") {
         result = String(getMeterFromCentiMeter(input)) + "m"
-    } else {
+    } else if input.contains("m") {
         result = String(getCentiMeterFromMeter(input)) + "cm"
     }
     printResult(result)
@@ -32,4 +33,4 @@ func printResult(_ result: String) {
     print("\(result)")
 }
 
-getResultString(input)
+getResultString(input ?? "0m")
