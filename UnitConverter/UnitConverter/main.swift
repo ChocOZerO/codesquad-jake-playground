@@ -18,6 +18,7 @@ enum Unit : String {
     case cm
     case m
     case inch
+    case yard
 }
 func getUnit(target: String) -> String {
     var unit : String = ""
@@ -27,6 +28,8 @@ func getUnit(target: String) -> String {
         unit = Unit.m.rawValue
     } else if target.contains(Unit.inch.rawValue) {
         unit = Unit.inch.rawValue
+    } else if target.contains(Unit.yard.rawValue) {
+        unit = Unit.yard.rawValue
     }
     return unit
 }
@@ -38,24 +41,28 @@ func getCentiMeterFromMeter(_ input: Double) -> Double {
 func getCentiMeterFromInch(_ input: Double) -> Double {
     return input * 2.54
 }
-
 func getMeterFromCentiMeter(_ input: Double) -> Double {
     return input / 100
 }
-
 func getInchFromCentiMeter(_ input: Double) -> Double {
     return input * 0.3937
+}
+func getCentiMeterFromYard(_ input: Double) -> Double {
+    return input * 91.438
 }
 
 func getTargetValue(from target: String) -> Double {
     var targetValue : Double = 0.0
-    if target.contains(Unit.cm.rawValue) {
-        targetValue = Double(target.prefix(target.count - 2)) ?? 0.0
-    } else if target.contains(Unit.m.rawValue) {
-        targetValue = Double(target.prefix(target.count - 1)) ?? 0.0
-    } else if target.contains(Unit.inch.rawValue) {
-        targetValue = Double(target.prefix(target.count - 4)) ?? 0.0
-    }
+//    if target.contains(Unit.cm.rawValue) {
+//        targetValue = Double(target.prefix(target.count - 2)) ?? 0.0
+//    } else if target.contains(Unit.m.rawValue) {
+//        targetValue = Double(target.prefix(target.count - 1)) ?? 0.0
+//    } else if target.contains(Unit.inch.rawValue) {
+//        targetValue = Double(target.prefix(target.count - 4)) ?? 0.0
+//    } else if target.contains(Unit.yard.rawValue) {
+//        targetValue = Double(target.prefix(target.count - 4)) ?? 0.0
+//    }
+    targetValue = Double(target.prefix(target.count - getUnit(target: target).count)) ?? 0.0
     return targetValue
 }
 
@@ -63,14 +70,18 @@ func getTargetValue(from target: String) -> Double {
 // output
 func getResultString(_ input: String) {
     let value = getTargetValue(from: input)
-    if input.contains(Unit.cm.rawValue) {
-        result = String(getMeterFromCentiMeter(value)) + "m"
-    } else if input.contains(Unit.m.rawValue) {
+    switch getUnit(target: input) {
+    case Unit.m.rawValue:
         result = String(getCentiMeterFromMeter(value)) + "cm"
-    } else if input.contains(Unit.inch.rawValue) {
+    case Unit.inch.rawValue:
         result = String(getCentiMeterFromInch(value)) + "cm"
+    case Unit.yard.rawValue:
+        result = String(getMeterFromCentiMeter(getCentiMeterFromYard(value))) + "m"
+    default: // Unit.cm.rawValue
+        result = String(getMeterFromCentiMeter(value)) + "m"
     }
     printResult(result)
+    
 }
 func getResultString(_ input: String, _ target: String) {
     let value = getTargetValue(from: input)
@@ -95,7 +106,15 @@ func getResultString(_ input: String, _ target: String) {
         default:
             result = String(getCentiMeterFromInch(value)) + "cm"
         }
+    } else if input.contains(Unit.yard.rawValue) {
+        switch target {
+        case Unit.m.rawValue:
+            result = String(getMeterFromCentiMeter(getCentiMeterFromYard(value))) + "m"
+        default:
+            result = String(getCentiMeterFromYard(value)) + "cm"
+        }
     }
+    
     printResult(result)
 }
 
@@ -109,9 +128,11 @@ flag : while true {
         print("변환시킬 길이 값을 입력해 주세요.")
         input = readLine() ?? ""
         if input == "q" || input == "quit" {
-            break flag
+            break flag // 전체 loop 종료
         }
         inputArr = input.components(separatedBy: " ")
+        
+        // input validation
         if inputArr.count > 1 {
             if Unit(rawValue: inputArr[1]) != nil {
                 targetFlag = true
