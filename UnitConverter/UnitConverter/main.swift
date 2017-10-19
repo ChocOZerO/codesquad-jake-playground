@@ -14,61 +14,56 @@ var input : String = ""
 var result : String = ""
 var inputArr : Array<String> = ["", ""]
 
-protocol UnitConvertible {
-    var value : Double { get set }
-    var unitFrom : String { get set }
-    var unitTo : String { get set }
-    var unitBase : String { get set }
-    func convert(from oldUnit: String, to newUnit: String) -> Double
-    func _convertToBase(oldUnit: String) -> Double
-    func _convertToTarget(value: Double, newUnit: String) -> Double
+enum UnitType {
+    case Length
+    case Weight
+    case Volume
+}
+struct Length {
+    enum LengthUnit : String {
+        case cm
+        case m
+        case inch
+        case yard
+    }
+    let LengthUnitRate : [String:Double] = [LengthUnit.cm.rawValue : 1, LengthUnit.m.rawValue : 100, LengthUnit.inch.rawValue : 2.54, LengthUnit.yard.rawValue : 91.438]
+    let LengthDefaultUnit : [String:String] = [LengthUnit.cm.rawValue : LengthUnit.m.rawValue, LengthUnit.m.rawValue : LengthUnit.cm.rawValue, LengthUnit.yard.rawValue : LengthUnit.m.rawValue]
+    
+    let LengthUnits : [String] = [LengthUnit.cm.rawValue, LengthUnit.m.rawValue, LengthUnit.inch.rawValue, LengthUnit.yard.rawValue]
+}
+func getUnit(target:String, units: Array<String>) -> String? {
+    for item in units {
+        if target.contains(item) {
+            return item
+        }
+    }
+    return nil
 }
 
-enum LengthUnit : String {
-    case cm
-    case m
-    case inch
-    case yard
-}
-let LengthUnitRate : [String:Double] = ["cm" : 1, "m" : 100, "inch" : 2.54, "yard" : 91.438]
-let LengthDefaultUnit : [String:String] = ["cm" : "m", "m" : "cm", "yard" : "m"]
-struct Length : UnitConvertible {
+struct Unit {
     var value : Double
-    var unitFrom : String
-    var unitTo : String
     var unitBase : String
+    var unitRate : Dictionary<String,Double>
+    
     func convert(from oldUnit: String, to newUnit: String) -> Double {
         return _convertToTarget(value: _convertToBase(oldUnit: oldUnit), newUnit: newUnit)
     }
     func _convertToBase(oldUnit: String) -> Double {
-        print("value : \(value)")
-        return self.value * (LengthUnitRate[oldUnit] ?? 1.0)
+        return self.value * (unitRate[oldUnit] ?? 1.0)
     }
     func _convertToTarget(value: Double, newUnit: String) -> Double {
-        return value / (LengthUnitRate[newUnit] ?? 1.0)
+        return value / (unitRate[newUnit] ?? 1.0)
     }
 }
 
-func getLengthUnit(target: String) -> String {
-    var unit : String = ""
-    if target.contains(LengthUnit.cm.rawValue) {
-        unit = LengthUnit.cm.rawValue
-    } else if target.contains(LengthUnit.m.rawValue) {
-        unit = LengthUnit.m.rawValue
-    } else if target.contains(LengthUnit.inch.rawValue) {
-        unit = LengthUnit.inch.rawValue
-    } else if target.contains(LengthUnit.yard.rawValue) {
-        unit = LengthUnit.yard.rawValue
-    }
-    return unit
-}
+let length = Length.init()
 
-func getTargetValue(from target: String) -> Double {
+
+func getTargetValue(from target: String, units: Array<String>) -> Double {
     var targetValue : Double = 0.0
-    targetValue = Double(target.prefix(target.count - getLengthUnit(target: target).count)) ?? 0.0
+    targetValue = Double(target.prefix(target.count - (getUnit(target: target, units: units) ?? "").count)) ?? 0.0
     return targetValue
 }
-
 
 func printResult(_ result: String) {
     print("\(result)")
@@ -76,7 +71,6 @@ func printResult(_ result: String) {
 
 flag : while true {
     // input
-    
     var unitFrom : String = ""
     var unitTo : String = ""
     repeat {
@@ -89,7 +83,7 @@ flag : while true {
         
         // input validation
         if inputArr.count > 1 {
-            if let unitTmp = LengthUnit(rawValue: inputArr[1]) {
+            if let unitTmp = Length.LengthUnit(rawValue: inputArr[1]) {
                 targetFlag = true
                 unitTo = unitTmp.rawValue
             } else {
@@ -99,7 +93,7 @@ flag : while true {
         } else {
             targetFlag = true
         }
-        if let unitTmp = LengthUnit(rawValue: getLengthUnit(target: inputArr[0])) {
+        if let unitTmp = Length.LengthUnit(rawValue: (getUnit(target: inputArr[0], units: length.LengthUnits) ?? "") ) {
             unitFlag = true
             unitFrom = unitTmp.rawValue
         } else {
@@ -108,10 +102,10 @@ flag : while true {
         }
     } while(!targetFlag || !unitFlag)
     
-    let value = getTargetValue(from: inputArr[0])
-    let length = Length.init(value: value, unitFrom: unitFrom, unitTo: unitTo, unitBase: LengthUnit.cm.rawValue)
+    let value = getTargetValue(from: inputArr[0], units: length.LengthUnits)
+    let lengthUnit = Unit.init(value: value, unitBase: Length.LengthUnit.cm.rawValue, unitRate: length.LengthUnitRate)
     if inputArr.count == 1 {
-        unitTo = LengthDefaultUnit[unitFrom] ?? "cm"
+        unitTo = length.LengthDefaultUnit[unitFrom] ?? "cm"
     }
-    printResult(String(length.convert(from: unitFrom, to: unitTo)) + unitTo)
+    printResult(String(lengthUnit.convert(from: unitFrom, to: unitTo)) + unitTo)
 }
