@@ -92,6 +92,37 @@ func getTargetValue(from target: String) -> Double {
     return targetValue
 }
 
+func checkUnitType(target: String) -> UnitType {
+    var unitType : UnitType = UnitType.None
+    
+    if Length.LengthUnit(rawValue: target) != nil {
+        unitType = UnitType.Length
+    } else if Weight.WeightUnit(rawValue: target) != nil {
+        unitType = UnitType.Weight
+    } else if Volume.VolumeUnit(rawValue: target) != nil {
+        unitType = UnitType.Volume
+    }
+    return unitType
+}
+
+func getTargetUnits(from: String, to: Array<String>) -> Array<String> {
+    var result : Array<String> = []
+    for item in to {
+        if item != from {
+            result.append(item)
+        }
+    }
+    return result
+}
+
+func printMenu() {
+    print("""
+        변환시킬 값과 단위를 입력해 주세요.
+        길이 : \(length.LengthUnits)
+        무게 : \(weight.WeightUnits)
+        부피 : \(volume.VolumeUnits)
+    """)
+}
 func printResult(value: Double, unitFrom: String, unitTypeTo: UnitType, unitTo unitTargets: Array<String>) {
     var result : String = ""
     var unitTo = unitTargets
@@ -117,30 +148,7 @@ func printResult(value: Double, unitFrom: String, unitTypeTo: UnitType, unitTo u
     default:
         print("입력이 올바르지 않습니다")
     }
-    print("결과 :\(result)")
-}
-
-func checkUnitType(target: String) -> UnitType {
-    var unitType : UnitType = UnitType.None
-    
-    if Length.LengthUnit(rawValue: target) != nil {
-        unitType = UnitType.Length
-    } else if Weight.WeightUnit(rawValue: target) != nil {
-        unitType = UnitType.Weight
-    } else if Volume.VolumeUnit(rawValue: target) != nil {
-        unitType = UnitType.Volume
-    }
-    return unitType
-}
-
-func getTargetUnits(from: String, to: Array<String>) -> Array<String> {
-    var result : Array<String> = []
-    for item in to {
-        if item != from {
-            result.append(item)
-        }
-    }
-    return result
+    print("결과 :\(result)\n")
 }
 
 programWhile : while true {
@@ -156,7 +164,7 @@ programWhile : while true {
     
     unitWhile : repeat {
         unitTo = []
-        print("변환시킬 값과 단위를 입력해 주세요.")
+        printMenu()
         input = readLine() ?? ""
         if input == "q" || input == "quit" {
             break programWhile // 전체 loop 종료
