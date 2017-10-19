@@ -14,109 +14,61 @@ var input : String = ""
 var result : String = ""
 var inputArr : Array<String> = ["", ""]
 
-enum Unit : String {
+protocol UnitConvertible {
+    var value : Double { get set }
+    var unitFrom : String { get set }
+    var unitTo : String { get set }
+    var unitBase : String { get set }
+    func convert(from oldUnit: String, to newUnit: String) -> Double
+    func _convertToBase(oldUnit: String) -> Double
+    func _convertToTarget(value: Double, newUnit: String) -> Double
+}
+
+enum LengthUnit : String {
     case cm
     case m
     case inch
     case yard
 }
-func getUnit(target: String) -> String {
+let LengthUnitRate : [String:Double] = ["cm" : 1, "m" : 100, "inch" : 2.54, "yard" : 91.438]
+let LengthDefaultUnit : [String:String] = ["cm" : "m", "m" : "cm", "yard" : "m"]
+struct Length : UnitConvertible {
+    var value : Double
+    var unitFrom : String
+    var unitTo : String
+    var unitBase : String
+    func convert(from oldUnit: String, to newUnit: String) -> Double {
+        return _convertToTarget(value: _convertToBase(oldUnit: oldUnit), newUnit: newUnit)
+    }
+    func _convertToBase(oldUnit: String) -> Double {
+        print("value : \(value)")
+        return self.value * (LengthUnitRate[oldUnit] ?? 1.0)
+    }
+    func _convertToTarget(value: Double, newUnit: String) -> Double {
+        return value / (LengthUnitRate[newUnit] ?? 1.0)
+    }
+}
+
+func getLengthUnit(target: String) -> String {
     var unit : String = ""
-    if target.contains(Unit.cm.rawValue) {
-        unit = Unit.cm.rawValue
-    } else if target.contains(Unit.m.rawValue) {
-        unit = Unit.m.rawValue
-    } else if target.contains(Unit.inch.rawValue) {
-        unit = Unit.inch.rawValue
-    } else if target.contains(Unit.yard.rawValue) {
-        unit = Unit.yard.rawValue
+    if target.contains(LengthUnit.cm.rawValue) {
+        unit = LengthUnit.cm.rawValue
+    } else if target.contains(LengthUnit.m.rawValue) {
+        unit = LengthUnit.m.rawValue
+    } else if target.contains(LengthUnit.inch.rawValue) {
+        unit = LengthUnit.inch.rawValue
+    } else if target.contains(LengthUnit.yard.rawValue) {
+        unit = LengthUnit.yard.rawValue
     }
     return unit
 }
 
-// calculate
-func getCentiMeterFromMeter(_ input: Double) -> Double {
-    return input * 100
-}
-func getCentiMeterFromInch(_ input: Double) -> Double {
-    return input * 2.54
-}
-func getMeterFromCentiMeter(_ input: Double) -> Double {
-    return input / 100
-}
-func getInchFromCentiMeter(_ input: Double) -> Double {
-    return input * 0.3937
-}
-func getCentiMeterFromYard(_ input: Double) -> Double {
-    return input * 91.438
-}
-
 func getTargetValue(from target: String) -> Double {
     var targetValue : Double = 0.0
-//    if target.contains(Unit.cm.rawValue) {
-//        targetValue = Double(target.prefix(target.count - 2)) ?? 0.0
-//    } else if target.contains(Unit.m.rawValue) {
-//        targetValue = Double(target.prefix(target.count - 1)) ?? 0.0
-//    } else if target.contains(Unit.inch.rawValue) {
-//        targetValue = Double(target.prefix(target.count - 4)) ?? 0.0
-//    } else if target.contains(Unit.yard.rawValue) {
-//        targetValue = Double(target.prefix(target.count - 4)) ?? 0.0
-//    }
-    targetValue = Double(target.prefix(target.count - getUnit(target: target).count)) ?? 0.0
+    targetValue = Double(target.prefix(target.count - getLengthUnit(target: target).count)) ?? 0.0
     return targetValue
 }
 
-
-// output
-func getResultString(_ input: String) {
-    let value = getTargetValue(from: input)
-    switch getUnit(target: input) {
-    case Unit.m.rawValue:
-        result = String(getCentiMeterFromMeter(value)) + "cm"
-    case Unit.inch.rawValue:
-        result = String(getCentiMeterFromInch(value)) + "cm"
-    case Unit.yard.rawValue:
-        result = String(getMeterFromCentiMeter(getCentiMeterFromYard(value))) + "m"
-    default: // Unit.cm.rawValue
-        result = String(getMeterFromCentiMeter(value)) + "m"
-    }
-    printResult(result)
-    
-}
-func getResultString(_ input: String, _ target: String) {
-    let value = getTargetValue(from: input)
-    if input.contains(Unit.cm.rawValue) {
-        switch target {
-        case Unit.inch.rawValue:
-            result = String(getInchFromCentiMeter(value)) + "inch"
-        default:
-            result = String(getMeterFromCentiMeter(value)) + "m"
-        }
-    } else if input.contains(Unit.m.rawValue) {
-        switch target {
-        case Unit.inch.rawValue:
-            result = String(getInchFromCentiMeter(getCentiMeterFromMeter(value))) + "inch"
-        default:
-            result = String(getCentiMeterFromMeter(value)) + "cm"
-        }
-    } else if input.contains(Unit.inch.rawValue) {
-        switch target {
-        case Unit.m.rawValue:
-            result = String(getMeterFromCentiMeter(getCentiMeterFromInch(value))) + "m"
-        default:
-            result = String(getCentiMeterFromInch(value)) + "cm"
-        }
-    } else if input.contains(Unit.yard.rawValue) {
-        switch target {
-        case Unit.m.rawValue:
-            result = String(getMeterFromCentiMeter(getCentiMeterFromYard(value))) + "m"
-        default:
-            result = String(getCentiMeterFromYard(value)) + "cm"
-        }
-    }
-    
-    printResult(result)
-}
 
 func printResult(_ result: String) {
     print("\(result)")
@@ -124,6 +76,9 @@ func printResult(_ result: String) {
 
 flag : while true {
     // input
+    
+    var unitFrom : String = ""
+    var unitTo : String = ""
     repeat {
         print("변환시킬 길이 값을 입력해 주세요.")
         input = readLine() ?? ""
@@ -134,8 +89,9 @@ flag : while true {
         
         // input validation
         if inputArr.count > 1 {
-            if Unit(rawValue: inputArr[1]) != nil {
+            if let unitTmp = LengthUnit(rawValue: inputArr[1]) {
                 targetFlag = true
+                unitTo = unitTmp.rawValue
             } else {
                 print("지원하지 않는 단위입니다.")
                 targetFlag = false
@@ -143,17 +99,19 @@ flag : while true {
         } else {
             targetFlag = true
         }
-        if Unit(rawValue: getUnit(target: inputArr[0])) != nil {
+        if let unitTmp = LengthUnit(rawValue: getLengthUnit(target: inputArr[0])) {
             unitFlag = true
+            unitFrom = unitTmp.rawValue
         } else {
             print("지원하지 않는 단위입니다.")
             unitFlag = false
         }
     } while(!targetFlag || !unitFlag)
     
-    if inputArr.count > 1 {
-        getResultString(inputArr[0], inputArr[1])
-    } else {
-        getResultString(inputArr[0])
+    let value = getTargetValue(from: inputArr[0])
+    let length = Length.init(value: value, unitFrom: unitFrom, unitTo: unitTo, unitBase: LengthUnit.cm.rawValue)
+    if inputArr.count == 1 {
+        unitTo = LengthDefaultUnit[unitFrom] ?? "cm"
     }
+    printResult(String(length.convert(from: unitFrom, to: unitTo)) + unitTo)
 }
