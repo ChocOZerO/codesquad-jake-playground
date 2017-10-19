@@ -8,8 +8,6 @@
 
 import Foundation
 
-var unitFlag : Bool = false
-var targetFlag : Bool = false
 var input : String = ""
 var result : String = ""
 var inputArr : Array<String> = ["", ""]
@@ -18,7 +16,9 @@ enum UnitType {
     case Length
     case Weight
     case Volume
+    case None
 }
+
 struct Length {
     enum LengthUnit : String {
         case cm
@@ -28,16 +28,18 @@ struct Length {
     }
     let LengthUnitRate : [String:Double] = [LengthUnit.cm.rawValue : 1, LengthUnit.m.rawValue : 100, LengthUnit.inch.rawValue : 2.54, LengthUnit.yard.rawValue : 91.438]
     let LengthDefaultUnit : [String:String] = [LengthUnit.cm.rawValue : LengthUnit.m.rawValue, LengthUnit.m.rawValue : LengthUnit.cm.rawValue, LengthUnit.yard.rawValue : LengthUnit.m.rawValue]
-    
     let LengthUnits : [String] = [LengthUnit.cm.rawValue, LengthUnit.m.rawValue, LengthUnit.inch.rawValue, LengthUnit.yard.rawValue]
 }
-func getUnit(target:String, units: Array<String>) -> String? {
-    for item in units {
-        if target.contains(item) {
-            return item
-        }
+struct Weight {
+    enum WeightUnit : String {
+        case g
+        case kg
+        case lb
+        case oz
     }
-    return nil
+    let WeightUnitRate : [String:Double] = [WeightUnit.g.rawValue : 1, WeightUnit.kg.rawValue : 1000, WeightUnit.lb.rawValue : 453.592, WeightUnit.oz.rawValue : 28.3495]
+    let WeightDefaultUnit : [String:String] = [WeightUnit.g.rawValue : WeightUnit.kg.rawValue, WeightUnit.kg.rawValue : WeightUnit.g.rawValue, WeightUnit.lb.rawValue : WeightUnit.kg.rawValue, WeightUnit.oz.rawValue : WeightUnit.kg.rawValue,]
+    let WeightUnits : [String] = [WeightUnit.kg.rawValue, WeightUnit.g.rawValue, WeightUnit.lb.rawValue, WeightUnit.oz.rawValue]
 }
 
 struct Unit {
@@ -57,11 +59,28 @@ struct Unit {
 }
 
 let length = Length.init()
+let weight = Weight.init()
+
+func getUnit(target:String) -> String? {
+    var units = length.LengthUnits
+    for item in units {
+        if target.contains(item) {
+            return item
+        }
+    }
+    units = weight.WeightUnits
+    for item in units {
+        if target.contains(item) {
+            return item
+        }
+    }
+    return nil
+}
 
 
-func getTargetValue(from target: String, units: Array<String>) -> Double {
+func getTargetValue(from target: String) -> Double {
     var targetValue : Double = 0.0
-    targetValue = Double(target.prefix(target.count - (getUnit(target: target, units: units) ?? "").count)) ?? 0.0
+    targetValue = Double(target.prefix(target.count - (getUnit(target: target) ?? "").count)) ?? 0.0
     return targetValue
 }
 
@@ -69,10 +88,28 @@ func printResult(_ result: String) {
     print("\(result)")
 }
 
+func checkUnitType(target: String) -> UnitType {
+    var unitType : UnitType = UnitType.None
+    
+    if Length.LengthUnit(rawValue: target) != nil {
+        unitType = UnitType.Length
+    } else if Weight.WeightUnit(rawValue: target) != nil {
+        unitType = UnitType.Weight
+    }
+    return unitType
+}
+
 flag : while true {
     // input
     var unitFrom : String = ""
     var unitTo : String = ""
+    var value : Double = 0.0
+    var unitTypeFrom : UnitType = UnitType.None
+    var unitTypeTo : UnitType = UnitType.None
+    
+    var fromFlag : Bool = false
+    var toFlag : Bool = false
+    
     repeat {
         print("변환시킬 길이 값을 입력해 주세요.")
         input = readLine() ?? ""
@@ -81,31 +118,54 @@ flag : while true {
         }
         inputArr = input.components(separatedBy: " ")
         
-        // input validation
-        if inputArr.count > 1 {
-            if let unitTmp = Length.LengthUnit(rawValue: inputArr[1]) {
-                targetFlag = true
-                unitTo = unitTmp.rawValue
-            } else {
-                print("지원하지 않는 단위입니다.")
-                targetFlag = false
-            }
-        } else {
-            targetFlag = true
-        }
-        if let unitTmp = Length.LengthUnit(rawValue: (getUnit(target: inputArr[0], units: length.LengthUnits) ?? "") ) {
-            unitFlag = true
-            unitFrom = unitTmp.rawValue
+        if let unitTmp = getUnit(target: inputArr[0]) {
+            fromFlag = true
+            unitFrom = unitTmp
         } else {
             print("지원하지 않는 단위입니다.")
-            unitFlag = false
+            continue
         }
-    } while(!targetFlag || !unitFlag)
+        value = getTargetValue(from: inputArr[0])
+        unitTypeFrom = checkUnitType(target: unitFrom)
+        
+        // input validation
+        if inputArr.count > 1 {
+            if let unitTmp = getUnit(target: inputArr[1]) {
+                toFlag = true
+                unitTo = unitTmp
+                unitTypeTo = checkUnitType(target: unitTo)
+            } else {
+                print("지원하지 않는 단위입니다.")
+                continue
+            }
+        } else {
+            unitTypeTo = unitTypeFrom
+            toFlag = true
+        }
+        
+        if unitTypeTo != unitTypeFrom {
+            print("두 단위는 변환할 수 없습니다.")
+            continue
+        }
+    } while(!toFlag || !fromFlag)
     
-    let value = getTargetValue(from: inputArr[0], units: length.LengthUnits)
-    let lengthUnit = Unit.init(value: value, unitBase: Length.LengthUnit.cm.rawValue, unitRate: length.LengthUnitRate)
-    if inputArr.count == 1 {
-        unitTo = length.LengthDefaultUnit[unitFrom] ?? "cm"
+    switch unitTypeTo {
+    case UnitType.Length:
+        let lengthUnit = Unit.init(value: value, unitBase: Length.LengthUnit.cm.rawValue, unitRate: length.LengthUnitRate)
+        if inputArr.count == 1 {
+            unitTo = length.LengthDefaultUnit[unitFrom] ?? "cm"
+        }
+        printResult(String(lengthUnit.convert(from: unitFrom, to: unitTo)) + unitTo)
+    case UnitType.Weight:
+        let weightUnit = Unit.init(value: value, unitBase: Weight.WeightUnit.g.rawValue, unitRate: weight.WeightUnitRate)
+        if inputArr.count == 1 {
+            unitTo = weight.WeightDefaultUnit[unitFrom] ?? "g"
+        }
+        printResult(String(weightUnit.convert(from: unitFrom, to: unitTo)) + unitTo)
+    default:
+        print("입력이 올바르지 않습니다")
+        continue
     }
-    printResult(String(lengthUnit.convert(from: unitFrom, to: unitTo)) + unitTo)
+    
+    
 }
