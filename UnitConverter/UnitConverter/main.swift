@@ -92,7 +92,31 @@ func getTargetValue(from target: String) -> Double {
     return targetValue
 }
 
-func printResult(_ result: String) {
+func printResult(value: Double, unitFrom: String, unitTypeTo: UnitType, unitTo unitTargets: Array<String>) {
+    var result : String = ""
+    var unitTo = unitTargets
+    switch unitTypeTo {
+    case UnitType.Length:
+        let lengthUnit = Unit.init(value: value, unitRate: length.LengthUnitRate)
+        if inputArr.count == 1 {
+            unitTo = getTargetUnits(from: unitFrom, to: length.LengthUnits)
+        }
+        result = lengthUnit.convert(from: unitFrom, to: unitTo)
+    case UnitType.Weight:
+        let weightUnit = Unit.init(value: value, unitRate: weight.WeightUnitRate)
+        if inputArr.count == 1 {
+            unitTo = getTargetUnits(from: unitFrom, to: weight.WeightUnits)
+        }
+        result = weightUnit.convert(from: unitFrom, to: unitTo)
+    case UnitType.Volume:
+        let volumeUnit = Unit.init(value: value, unitRate: volume.VolumeUnitRate)
+        if inputArr.count == 1 {
+            unitTo = getTargetUnits(from: unitFrom, to: volume.VolumeUnits)
+        }
+        result = volumeUnit.convert(from: unitFrom, to: unitTo)
+    default:
+        print("입력이 올바르지 않습니다")
+    }
     print("결과 :\(result)")
 }
 
@@ -131,6 +155,7 @@ programWhile : while true {
     var toFlag : Bool = false
     
     unitWhile : repeat {
+        unitTo = []
         print("변환시킬 값과 단위를 입력해 주세요.")
         input = readLine() ?? ""
         if input == "q" || input == "quit" {
@@ -180,27 +205,5 @@ programWhile : while true {
         }
     } while(!toFlag || !fromFlag)
     
-    switch unitTypeTo {
-    case UnitType.Length:
-        let lengthUnit = Unit.init(value: value, unitRate: length.LengthUnitRate)
-        if inputArr.count == 1 {
-            unitTo = getTargetUnits(from: unitFrom, to: length.LengthUnits)
-        }
-        printResult(lengthUnit.convert(from: unitFrom, to: unitTo))
-    case UnitType.Weight:
-        let weightUnit = Unit.init(value: value, unitRate: weight.WeightUnitRate)
-        if inputArr.count == 1 {
-            unitTo = getTargetUnits(from: unitFrom, to: weight.WeightUnits)
-        }
-        printResult(weightUnit.convert(from: unitFrom, to: unitTo))
-    case UnitType.Volume:
-        let volumeUnit = Unit.init(value: value, unitRate: volume.VolumeUnitRate)
-        if inputArr.count == 1 {
-            unitTo = getTargetUnits(from: unitFrom, to: volume.VolumeUnits)
-        }
-        printResult(volumeUnit.convert(from: unitFrom, to: unitTo))
-    default:
-        print("입력이 올바르지 않습니다")
-        continue
-    }
+    printResult(value: value, unitFrom: unitFrom, unitTypeTo: unitTypeTo, unitTo: unitTo)
 }
